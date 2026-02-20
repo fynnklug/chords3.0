@@ -3,6 +3,8 @@
 import { useState } from "react";
 import useSWR, { mutate } from "swr";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { Check, Plus, ListMusic, Loader2 } from "lucide-react";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -76,19 +78,20 @@ export function AddToPlaylistContent({
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-          className="h-9 border-border/20 bg-card"
+          className="h-9"
         />
-        <button
+        <Button
+          variant="outline"
+          size="icon-sm"
           onClick={handleCreate}
           disabled={!newName.trim() || creating}
-          className="flex items-center justify-center size-9 shrink-0 rounded-lg border border-border/20 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
         >
           {creating ? (
             <Loader2 className="size-4 animate-spin" />
           ) : (
             <Plus className="size-4" />
           )}
-        </button>
+        </Button>
       </div>
 
       {/* Existing playlists */}
@@ -99,34 +102,36 @@ export function AddToPlaylistContent({
       ) : !playlists?.length ? (
         <div className="flex flex-col items-center py-8 text-center">
           <ListMusic className="size-8 text-muted-foreground mb-2" />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Noch keine Playlisten vorhanden.
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-0.5 max-h-64 overflow-y-auto">
-          {playlists.map((pl) => {
+        <div className="flex flex-col max-h-64 overflow-y-auto">
+          {playlists.map((pl, i) => {
             const isAdded = added.has(pl.id);
             const isAdding = addingTo === pl.id;
             return (
-              <button
-                key={pl.id}
-                onClick={() => !isAdded && handleAdd(pl.id)}
-                disabled={isAdded || isAdding}
-                className="flex items-center gap-3 rounded-xl p-3 text-left transition-colors hover:bg-card disabled:opacity-60"
-              >
-                <div className="flex items-center justify-center size-8 shrink-0 rounded-lg border border-border/20 bg-card">
-                  <ListMusic className="size-4 text-muted-foreground" />
-                </div>
-                <span className="text-sm font-medium flex-1 truncate text-foreground">
-                  {pl.name}
-                </span>
-                {isAdding ? (
-                  <Loader2 className="size-4 animate-spin text-muted-foreground" />
-                ) : isAdded ? (
-                  <Check className="size-4 text-foreground" />
-                ) : null}
-              </button>
+              <div key={pl.id}>
+                <button
+                  onClick={() => !isAdded && handleAdd(pl.id)}
+                  disabled={isAdded || isAdding}
+                  className="flex items-center gap-3 w-full px-2 py-2.5 text-left hover:bg-muted/50 rounded-md disabled:opacity-60"
+                >
+                  <div className="flex items-center justify-center size-8 shrink-0 rounded-md bg-muted">
+                    <ListMusic className="size-4 text-muted-foreground" />
+                  </div>
+                  <span className="text-sm font-medium flex-1 truncate">
+                    {pl.name}
+                  </span>
+                  {isAdding ? (
+                    <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                  ) : isAdded ? (
+                    <Check className="size-4 text-foreground" />
+                  ) : null}
+                </button>
+                {i < playlists.length - 1 && <Separator className="ml-12" />}
+              </div>
             );
           })}
         </div>

@@ -4,8 +4,9 @@ import { useState, useMemo } from "react";
 import useSWR from "swr";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
   Drawer,
   DrawerContent,
@@ -53,131 +54,118 @@ export function SearchView({ onSingNow }: SearchViewProps) {
   return (
     <div className="flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-border/20 bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/40">
-        <div className="px-4 pt-6 pb-2">
-          <h1 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Suche
-          </h1>
+      <header className="sticky top-0 z-30 bg-background">
+        <div className="flex items-center justify-between px-4 h-14">
+          <h1 className="text-lg font-semibold">Suche</h1>
+          <span className="text-sm text-muted-foreground">
+            {songs?.length ?? 0} Lieder
+          </span>
         </div>
         <div className="px-4 pb-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Lied oder Interpret..."
+              placeholder="Lied oder Interpret suchen..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="pl-9 h-10 border-border/20 bg-card"
+              className="pl-9 h-9"
             />
           </div>
         </div>
-        <ScrollArea className="w-full">
-          <div className="flex gap-2 px-4 pb-3">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wider transition-colors ${
-                  activeCategory === cat
-                    ? "bg-foreground text-background"
-                    : "border border-border/20 text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+        <div className="flex gap-1.5 px-4 pb-3 overflow-x-auto">
+          {categories.map((cat) => (
+            <Badge
+              key={cat}
+              variant={activeCategory === cat ? "default" : "outline"}
+              className="cursor-pointer shrink-0"
+              onClick={() => setActiveCategory(cat)}
+            >
+              {cat}
+            </Badge>
+          ))}
+        </div>
+        <Separator />
       </header>
 
       {/* Song list */}
-      <div className="flex-1 px-4 py-3">
+      <div className="flex-1">
         {isLoading ? (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 p-3">
-                <Skeleton className="size-10 rounded-lg" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-3/4" />
+              <div key={i} className="flex items-center gap-3 px-4 py-3">
+                <Skeleton className="size-9 rounded-md" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-3.5 w-3/4" />
                   <Skeleton className="h-3 w-1/2" />
                 </div>
               </div>
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="flex items-center justify-center size-12 rounded-full border border-border/20 mb-4">
+          <div className="flex flex-col items-center justify-center py-20 text-center px-4">
+            <div className="flex items-center justify-center size-10 rounded-md bg-muted mb-3">
               <Music className="size-5 text-muted-foreground" />
             </div>
-            <p className="text-sm font-medium text-foreground">
-              Keine Lieder gefunden
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-sm font-medium">Keine Lieder gefunden</p>
+            <p className="text-sm text-muted-foreground mt-1">
               {query
                 ? "Versuche einen anderen Suchbegriff."
                 : "Es sind noch keine Lieder vorhanden."}
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-0.5">
-            {filtered.map((song) => (
-              <div
-                key={song.id}
-                className="group flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-card"
-              >
-                <button
-                  className="flex items-center gap-3 flex-1 min-w-0 text-left"
-                  onClick={() => onSingNow(song)}
-                >
-                  <div className="flex items-center justify-center size-10 shrink-0 rounded-lg border border-border/20 bg-card">
-                    <Music className="size-4 text-muted-foreground" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate text-foreground">
-                      {song.title}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {song.artist}
-                      {song.category && (
-                        <span className="ml-2 text-muted-foreground/50">
-                          {song.category}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                </button>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    className="size-8"
-                    onClick={() => setDrawerSong(song)}
-                    aria-label="Zur Playlist hinzufuegen"
-                  >
-                    <Plus className="size-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    className="size-8"
+          <div className="flex flex-col">
+            {filtered.map((song, i) => (
+              <div key={song.id}>
+                <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/50">
+                  <button
+                    className="flex items-center gap-3 flex-1 min-w-0 text-left"
                     onClick={() => onSingNow(song)}
-                    aria-label="Jetzt singen"
                   >
-                    <Mic className="size-4" />
-                  </Button>
+                    <div className="flex items-center justify-center size-9 shrink-0 rounded-md bg-muted">
+                      <Music className="size-4 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">
+                        {song.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {song.artist}
+                        {song.category && (
+                          <>
+                            {" "}
+                            <span className="text-muted-foreground/60">
+                              {"  "}
+                              {song.category}
+                            </span>
+                          </>
+                        )}
+                      </p>
+                    </div>
+                  </button>
+                  <div className="flex items-center gap-0.5">
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => setDrawerSong(song)}
+                      aria-label="Zur Playlist hinzufuegen"
+                    >
+                      <Plus className="size-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => onSingNow(song)}
+                      aria-label="Jetzt singen"
+                      className="hidden sm:inline-flex"
+                    >
+                      <Mic className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-                {/* Mobile-visible buttons */}
-                <div className="flex items-center gap-1 md:hidden">
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    className="size-8"
-                    onClick={() => setDrawerSong(song)}
-                    aria-label="Zur Playlist hinzufuegen"
-                  >
-                    <Plus className="size-3.5 text-muted-foreground" />
-                  </Button>
-                </div>
+                {i < filtered.length - 1 && (
+                  <Separator className="ml-16" />
+                )}
               </div>
             ))}
           </div>
@@ -191,9 +179,7 @@ export function SearchView({ onSingNow }: SearchViewProps) {
       >
         <DrawerContent>
           <DrawerHeader>
-            <DrawerTitle className="text-xs font-semibold uppercase tracking-[0.15em]">
-              Zur Playlist hinzufuegen
-            </DrawerTitle>
+            <DrawerTitle>Zur Playlist hinzufuegen</DrawerTitle>
           </DrawerHeader>
           {drawerSong && (
             <AddToPlaylistContent
