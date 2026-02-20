@@ -2,6 +2,14 @@
 
 import { signIn } from "@/lib/auth-client";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
 function GoogleIcon({ className }: { className?: string }) {
@@ -44,32 +52,31 @@ export function LoginForm() {
   };
 
   return (
-    <div className="flex w-full max-w-sm flex-col items-center gap-8">
-      <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-balance text-foreground">
-          Willkommen bei Chords
-        </h1>
-        <p className="text-sm text-muted-foreground text-balance">
+    <Card className="w-full max-w-sm">
+      <CardHeader className="text-center">
+        <CardTitle className="text-xl">Willkommen bei Chords</CardTitle>
+        <CardDescription>
           Melde dich an, um auf dein Songbook zuzugreifen.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4">
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={handleGoogleLogin}
+          disabled={loading}
+        >
+          {loading ? (
+            <Loader2 className="size-4 animate-spin mr-2" />
+          ) : (
+            <GoogleIcon className="size-4 mr-2" />
+          )}
+          {loading ? "Verbinden..." : "Mit Google anmelden"}
+        </Button>
+        <p className="text-xs text-muted-foreground text-center text-balance leading-relaxed">
+          {"Mit der Anmeldung stimmst du unseren Nutzungsbedingungen und Datenschutzrichtlinien zu."}
         </p>
-      </div>
-
-      <button
-        onClick={handleGoogleLogin}
-        disabled={loading}
-        className="flex w-full items-center justify-center gap-3 rounded-full border border-border/20 bg-card px-6 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-50"
-      >
-        {loading ? (
-          <Loader2 className="size-4 animate-spin" />
-        ) : (
-          <GoogleIcon className="size-4" />
-        )}
-        {loading ? "Verbinden..." : "Mit Google anmelden"}
-      </button>
-
-      <p className="text-[10px] text-muted-foreground/50 text-center text-balance leading-relaxed uppercase tracking-wider">
-        {"Mit der Anmeldung stimmst du unseren Nutzungsbedingungen und Datenschutzrichtlinien zu."}
-      </p>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

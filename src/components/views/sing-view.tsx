@@ -3,12 +3,21 @@
 import { useState, useCallback, useEffect } from "react";
 import useSWR from "swr";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ListPlus, Share2, Maximize, Music, Guitar, MicVocal } from "lucide-react";
 import type { SongMeta } from "@/components/app-shell/app-shell";
 import type { SongData } from "@/lib/songs/types";
@@ -27,8 +36,7 @@ export function SingView({ song }: SingViewProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showChords, setShowChords] = useState(false);
 
-  // Fetch song content from JSON via API
-  const { data: songData } = useSWR<SongData>(
+  const { data: songData, isLoading } = useSWR<SongData>(
     song?.slug ? `/api/songs/${song.slug}` : null,
     fetcher
   );
@@ -47,7 +55,6 @@ export function SingView({ song }: SingViewProps) {
     }
   }, [song]);
 
-  // Record to history when song loads
   useEffect(() => {
     if (!song) return;
     fetch("/api/history", {
@@ -60,13 +67,11 @@ export function SingView({ song }: SingViewProps) {
   if (!song) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100svh-4rem)] text-center px-6">
-        <div className="flex items-center justify-center size-14 rounded-full border border-border/20 mb-4">
-          <Music className="size-6 text-muted-foreground" />
+        <div className="flex items-center justify-center size-10 rounded-md bg-muted mb-3">
+          <Music className="size-5 text-muted-foreground" />
         </div>
-        <p className="text-sm font-medium text-foreground">
-          Kein Lied ausgewaehlt
-        </p>
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-sm font-medium">Kein Lied ausgewaehlt</p>
+        <p className="text-sm text-muted-foreground mt-1">
           {"Waehle ein Lied aus der Suche aus."}
         </p>
       </div>
@@ -85,11 +90,11 @@ export function SingView({ song }: SingViewProps) {
 
   return (
     <div className="flex flex-col">
-      {/* Action bar */}
-      <header className="sticky top-0 z-30 border-b border-border/20 bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/40">
+      {/* Header */}
+      <header className="sticky top-0 z-30 bg-background">
         <div className="flex items-center justify-between px-4 h-14">
           <div className="min-w-0 flex-1">
-            <h1 className="text-sm font-semibold truncate text-foreground">
+            <h1 className="text-sm font-semibold truncate">
               {song.title}
             </h1>
             {song.artist && (
@@ -99,15 +104,10 @@ export function SingView({ song }: SingViewProps) {
             )}
           </div>
           <div className="flex items-center gap-1">
-            {/* Singer / Player toggle */}
-            <button
+            <Badge
+              variant={showChords ? "default" : "outline"}
+              className="cursor-pointer gap-1"
               onClick={() => setShowChords(!showChords)}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider transition-all ${
-                showChords
-                  ? "bg-foreground text-background"
-                  : "border border-border/20 text-muted-foreground hover:text-foreground"
-              }`}
-              aria-label={showChords ? "Akkorde ausblenden" : "Akkorde anzeigen"}
             >
               {showChords ? (
                 <>
@@ -120,64 +120,82 @@ export function SingView({ song }: SingViewProps) {
                   Singer
                 </>
               )}
-            </button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="size-8"
-              onClick={() => setDrawerOpen(true)}
-              aria-label="Zur Playlist hinzufuegen"
-            >
-              <ListPlus className="size-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="size-8"
-              onClick={handleShare}
-              aria-label="Teilen"
-            >
-              <Share2 className="size-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="size-8"
-              onClick={() => setShowPresentation(true)}
-              aria-label="Praesentationsmodus"
-            >
-              <Maximize className="size-4" />
-            </Button>
+            </Badge>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => setDrawerOpen(true)}
+                    aria-label="Zur Playlist hinzufuegen"
+                  >
+                    <ListPlus className="size-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Zur Playlist</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={handleShare}
+                    aria-label="Teilen"
+                  >
+                    <Share2 className="size-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Teilen</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => setShowPresentation(true)}
+                    aria-label="Praesentationsmodus"
+                  >
+                    <Maximize className="size-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Praesentation</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
+        <Separator />
       </header>
 
       {/* Lyrics */}
       <div className="px-4 py-6">
-        {!songData ? (
-          <div className="flex flex-col items-center py-12">
-            <div className="size-5 rounded-full border-2 border-muted-foreground/30 border-t-foreground animate-spin" />
+        {isLoading ? (
+          <div className="flex flex-col gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="space-y-2">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-4 w-4/6" />
+              </div>
+            ))}
           </div>
-        ) : songData.sections.length === 0 ? (
+        ) : !songData || songData.sections.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Keine Inhalte vorhanden.
           </p>
         ) : (
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-6">
             {songData.sections.map((section, i) => (
               <div key={i}>
                 {section.label && (
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-3">
+                  <p className="text-xs font-semibold text-muted-foreground mb-2">
                     {section.label}
                   </p>
                 )}
                 <div className="space-y-0.5">
                   {section.lines.map((line, j) => (
-                    <ChordLine
-                      key={j}
-                      line={line}
-                      showChords={showChords}
-                    />
+                    <ChordLine key={j} line={line} showChords={showChords} />
                   ))}
                 </div>
               </div>
@@ -190,9 +208,7 @@ export function SingView({ song }: SingViewProps) {
       <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
         <DrawerContent>
           <DrawerHeader>
-            <DrawerTitle className="text-xs font-semibold uppercase tracking-[0.15em]">
-              Zur Playlist hinzufuegen
-            </DrawerTitle>
+            <DrawerTitle>Zur Playlist hinzufuegen</DrawerTitle>
           </DrawerHeader>
           <AddToPlaylistContent
             songId={song.id}
