@@ -5,7 +5,9 @@ const getBaseURL = () => {
     return window.location.origin;
   }
 
-  return process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "";
+  return process.env.NODE_ENV === "production"
+    ? process.env.APP_URL_PROD || ""
+    : process.env.APP_URL_DEV || "";
 };
 
 export const authClient = createAuthClient({

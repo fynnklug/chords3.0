@@ -3,17 +3,18 @@ import type { Session } from "better-auth/types";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-    const canonicalUrl = process.env.BETTER_AUTH_URL;
+    const canonicalUrl = process.env.APP_URL_PROD;
     if (canonicalUrl) {
         try {
             const canonical = new URL(canonicalUrl);
+            const canonicalIsLocalhost = canonical.hostname === "localhost" || canonical.hostname === "127.0.0.1";
             const isLocalhost = request.nextUrl.hostname === "localhost" || request.nextUrl.hostname === "127.0.0.1";
-            if (!isLocalhost && request.nextUrl.hostname !== canonical.hostname) {
+            if (!isLocalhost && !canonicalIsLocalhost && request.nextUrl.hostname !== canonical.hostname) {
                 const redirectUrl = new URL(request.nextUrl.pathname + request.nextUrl.search, canonical.origin);
                 return NextResponse.redirect(redirectUrl, 307);
             }
         } catch {
-            // ignore invalid BETTER_AUTH_URL
+            // ignore invalid APP_URL_PROD
         }
     }
 

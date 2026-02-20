@@ -3,9 +3,8 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "./db"; // Pfad ggf. anpassen, falls db/index.ts woanders liegt
 import { user, session, account, verification } from "./db/schema"; // Importiere DEINE Tabellen
 
-const trustedOrigins = (process.env.BETTER_AUTH_TRUSTED_ORIGINS || "")
-    .split(",")
-    .map((origin) => origin.trim())
+const trustedOrigins = [process.env.APP_URL_DEV, process.env.APP_URL_PROD]
+    .map((origin) => origin?.trim())
     .filter((origin): origin is string => Boolean(origin));
 
 export const auth = betterAuth({
