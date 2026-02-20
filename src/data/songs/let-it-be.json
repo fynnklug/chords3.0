@@ -1,0 +1,78 @@
+{
+  "slug": "let-it-be",
+  "title": "Let It Be",
+  "artist": "The Beatles",
+  "category": "Classic",
+  "sections": [
+    {
+      "type": "verse",
+      "label": "Verse 1",
+      "lines": [
+        "[C]When I find myself in [G]times of trouble",
+        "[Am]Mother Mary [F]comes to me",
+        "[C]Speaking words of [G]wisdom",
+        "Let it [F]be [C]"
+      ]
+    },
+    {
+      "type": "verse",
+      "label": "Verse 2",
+      "lines": [
+        "[C]And in my hour of [G]darkness",
+        "She is [Am]standing right in [F]front of me",
+        "[C]Speaking words of [G]wisdom",
+        "Let it [F]be [C]"
+      ]
+    },
+    {
+      "type": "chorus",
+      "label": "Chorus",
+      "lines": [
+        "Let it [Am]be, let it [G]be",
+        "Let it [F]be, let it [C]be",
+        "[C]Whisper words of [G]wisdom",
+        "Let it [F]be [C]"
+      ]
+    },
+    {
+      "type": "verse",
+      "label": "Verse 3",
+      "lines": [
+        "[C]And when the broken [G]hearted people",
+        "[Am]Living in the [F]world agree",
+        "[C]There will be an [G]answer",
+        "Let it [F]be [C]"
+      ]
+    },
+    {
+      "type": "verse",
+      "label": "Verse 4",
+      "lines": [
+        "[C]For though they may be [G]parted",
+        "There is [Am]still a chance that [F]they will see",
+        "[C]There will be an [G]answer",
+        "Let it [F]be [C]"
+      ]
+    },
+    {
+      "type": "chorus",
+      "label": "Chorus",
+      "lines": [
+        "Let it [Am]be, let it [G]be",
+        "Let it [F]be, let it [C]be",
+        "[C]There will be an [G]answer",
+        "Let it [F]be [C]"
+      ]
+    },
+    {
+      "type": "bridge",
+      "label": "Bridge",
+      "lines": [
+        "[F]Let it [C]be, [G]let it [F]be",
+        "[C]Let it [G]be, let it [F]be [C]",
+        "[C]Whisper words of [G]wisdom",
+        "Let it [F]be [C]"
+      ]
+    }
+  ]
+}

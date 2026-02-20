@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -8,44 +9,29 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { ListPlus, Share2, Maximize, Music } from "lucide-react";
-import type { Song } from "@/components/app-shell/app-shell";
+import { ListPlus, Share2, Maximize, Music, Guitar, MicVocal } from "lucide-react";
+import type { SongMeta } from "@/components/app-shell/app-shell";
+import type { SongData } from "@/lib/songs/types";
 import { PresentationMode } from "@/components/views/presentation-mode";
 import { AddToPlaylistContent } from "@/components/shared/add-to-playlist";
+import { ChordLine } from "@/components/song/chord-line";
 
 interface SingViewProps {
-  song: Song | null;
+  song: SongMeta | null;
 }
 
-function parseSections(content: string | null): { label: string; lines: string[] }[] {
-  if (!content) return [];
-  const raw = content.split("\n");
-  const sections: { label: string; lines: string[] }[] = [];
-  let current: { label: string; lines: string[] } = { label: "", lines: [] };
-
-  for (const line of raw) {
-    const trimmed = line.trim();
-    // detect section headers like [Verse 1], [Chorus], etc.
-    if (/^\[.+\]$/.test(trimmed)) {
-      if (current.lines.length > 0 || current.label) {
-        sections.push(current);
-      }
-      current = { label: trimmed.slice(1, -1), lines: [] };
-    } else {
-      current.lines.push(line);
-    }
-  }
-  if (current.lines.length > 0 || current.label) {
-    sections.push(current);
-  }
-  return sections;
-}
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export function SingView({ song }: SingViewProps) {
   const [showPresentation, setShowPresentation] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [showChords, setShowChords] = useState(false);
 
-  const sections = parseSections(song?.content ?? null);
+  // Fetch song content from JSON via API
+  const { data: songData } = useSWR<SongData>(
+    song?.slug ? `/api/songs/${song.slug}` : null,
+    fetcher
+  );
 
   const handleShare = useCallback(async () => {
     if (!song) return;
@@ -74,22 +60,24 @@ export function SingView({ song }: SingViewProps) {
   if (!song) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100svh-4rem)] text-center px-6">
-        <div className="flex items-center justify-center size-12 rounded-full bg-muted mb-4">
+        <div className="flex items-center justify-center size-14 rounded-full border border-border/20 mb-4">
           <Music className="size-6 text-muted-foreground" />
         </div>
-        <p className="text-sm font-medium">Kein Lied ausgewaehlt</p>
+        <p className="text-sm font-medium text-foreground">
+          Kein Lied ausgewaehlt
+        </p>
         <p className="text-xs text-muted-foreground mt-1">
-          {"Waehle ein Lied aus der Suche aus, um es hier zu singen."}
+          {"Waehle ein Lied aus der Suche aus."}
         </p>
       </div>
     );
   }
 
-  if (showPresentation) {
+  if (showPresentation && songData) {
     return (
       <PresentationMode
-        sections={sections}
-        title={song.title}
+        songData={songData}
+        showChords={showChords}
         onClose={() => setShowPresentation(false)}
       />
     );
@@ -98,18 +86,45 @@ export function SingView({ song }: SingViewProps) {
   return (
     <div className="flex flex-col">
       {/* Action bar */}
-      <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/80">
+      <header className="sticky top-0 z-30 border-b border-border/20 bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/40">
         <div className="flex items-center justify-between px-4 h-14">
           <div className="min-w-0 flex-1">
-            <h1 className="text-sm font-semibold truncate">{song.title}</h1>
+            <h1 className="text-sm font-semibold truncate text-foreground">
+              {song.title}
+            </h1>
             {song.artist && (
-              <p className="text-xs text-muted-foreground truncate">{song.artist}</p>
+              <p className="text-xs text-muted-foreground truncate">
+                {song.artist}
+              </p>
             )}
           </div>
           <div className="flex items-center gap-1">
+            {/* Singer / Player toggle */}
+            <button
+              onClick={() => setShowChords(!showChords)}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider transition-all ${
+                showChords
+                  ? "bg-foreground text-background"
+                  : "border border-border/20 text-muted-foreground hover:text-foreground"
+              }`}
+              aria-label={showChords ? "Akkorde ausblenden" : "Akkorde anzeigen"}
+            >
+              {showChords ? (
+                <>
+                  <Guitar className="size-3" />
+                  Player
+                </>
+              ) : (
+                <>
+                  <MicVocal className="size-3" />
+                  Singer
+                </>
+              )}
+            </button>
             <Button
               variant="ghost"
               size="icon-sm"
+              className="size-8"
               onClick={() => setDrawerOpen(true)}
               aria-label="Zur Playlist hinzufuegen"
             >
@@ -118,6 +133,7 @@ export function SingView({ song }: SingViewProps) {
             <Button
               variant="ghost"
               size="icon-sm"
+              className="size-8"
               onClick={handleShare}
               aria-label="Teilen"
             >
@@ -126,6 +142,7 @@ export function SingView({ song }: SingViewProps) {
             <Button
               variant="ghost"
               size="icon-sm"
+              className="size-8"
               onClick={() => setShowPresentation(true)}
               aria-label="Praesentationsmodus"
             >
@@ -137,29 +154,30 @@ export function SingView({ song }: SingViewProps) {
 
       {/* Lyrics */}
       <div className="px-4 py-6">
-        {sections.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Keine Inhalte vorhanden.</p>
+        {!songData ? (
+          <div className="flex flex-col items-center py-12">
+            <div className="size-5 rounded-full border-2 border-muted-foreground/30 border-t-foreground animate-spin" />
+          </div>
+        ) : songData.sections.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Keine Inhalte vorhanden.
+          </p>
         ) : (
-          <div className="flex flex-col gap-6">
-            {sections.map((section, i) => (
+          <div className="flex flex-col gap-8">
+            {songData.sections.map((section, i) => (
               <div key={i}>
                 {section.label && (
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-3">
                     {section.label}
                   </p>
                 )}
                 <div className="space-y-0.5">
                   {section.lines.map((line, j) => (
-                    <p
+                    <ChordLine
                       key={j}
-                      className={
-                        line.trim() === ""
-                          ? "h-3"
-                          : "text-[15px] leading-relaxed font-mono"
-                      }
-                    >
-                      {line}
-                    </p>
+                      line={line}
+                      showChords={showChords}
+                    />
                   ))}
                 </div>
               </div>
@@ -172,7 +190,9 @@ export function SingView({ song }: SingViewProps) {
       <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
         <DrawerContent>
           <DrawerHeader>
-            <DrawerTitle>Zur Playlist hinzufuegen</DrawerTitle>
+            <DrawerTitle className="text-xs font-semibold uppercase tracking-[0.15em]">
+              Zur Playlist hinzufuegen
+            </DrawerTitle>
           </DrawerHeader>
           <AddToPlaylistContent
             songId={song.id}
