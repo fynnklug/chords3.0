@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import useSWR, { mutate } from "swr";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Check, Plus, ListMusic, Loader2 } from "lucide-react";
 
@@ -20,8 +19,14 @@ interface AddToPlaylistContentProps {
   onDone: () => void;
 }
 
-export function AddToPlaylistContent({ songId, onDone }: AddToPlaylistContentProps) {
-  const { data: playlists, isLoading } = useSWR<Playlist[]>("/api/playlists", fetcher);
+export function AddToPlaylistContent({
+  songId,
+  onDone,
+}: AddToPlaylistContentProps) {
+  const { data: playlists, isLoading } = useSWR<Playlist[]>(
+    "/api/playlists",
+    fetcher
+  );
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [addingTo, setAddingTo] = useState<number | null>(null);
@@ -71,19 +76,19 @@ export function AddToPlaylistContent({ songId, onDone }: AddToPlaylistContentPro
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-          className="h-9"
+          className="h-9 border-border/20 bg-card"
         />
-        <Button
-          size="sm"
+        <button
           onClick={handleCreate}
           disabled={!newName.trim() || creating}
+          className="flex items-center justify-center size-9 shrink-0 rounded-lg border border-border/20 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
         >
           {creating ? (
             <Loader2 className="size-4 animate-spin" />
           ) : (
             <Plus className="size-4" />
           )}
-        </Button>
+        </button>
       </div>
 
       {/* Existing playlists */}
@@ -99,7 +104,7 @@ export function AddToPlaylistContent({ songId, onDone }: AddToPlaylistContentPro
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-1 max-h-64 overflow-y-auto">
+        <div className="flex flex-col gap-0.5 max-h-64 overflow-y-auto">
           {playlists.map((pl) => {
             const isAdded = added.has(pl.id);
             const isAdding = addingTo === pl.id;
@@ -108,12 +113,12 @@ export function AddToPlaylistContent({ songId, onDone }: AddToPlaylistContentPro
                 key={pl.id}
                 onClick={() => !isAdded && handleAdd(pl.id)}
                 disabled={isAdded || isAdding}
-                className="flex items-center gap-3 rounded-lg p-3 text-left transition-colors hover:bg-accent disabled:opacity-60"
+                className="flex items-center gap-3 rounded-xl p-3 text-left transition-colors hover:bg-card disabled:opacity-60"
               >
-                <div className="flex items-center justify-center size-8 shrink-0 rounded-md bg-muted">
+                <div className="flex items-center justify-center size-8 shrink-0 rounded-lg border border-border/20 bg-card">
                   <ListMusic className="size-4 text-muted-foreground" />
                 </div>
-                <span className="text-sm font-medium flex-1 truncate">
+                <span className="text-sm font-medium flex-1 truncate text-foreground">
                   {pl.name}
                 </span>
                 {isAdding ? (

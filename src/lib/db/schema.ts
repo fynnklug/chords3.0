@@ -55,9 +55,10 @@ export const verification = pgTable("verification", {
 
 export const lieder = pgTable("lied", {
     id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    slug: text("slug").notNull().unique(),
     title: text("title").notNull(),
     artist: text("artist"),
-    content: text("content"),
+    category: text("category"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

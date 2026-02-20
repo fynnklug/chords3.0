@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { signIn } from "@/lib/auth-client";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
@@ -47,7 +46,7 @@ export function LoginForm() {
   return (
     <div className="flex w-full max-w-sm flex-col items-center gap-8">
       <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-3xl font-semibold tracking-tight text-balance">
+        <h1 className="text-2xl font-semibold tracking-tight text-balance text-foreground">
           Willkommen bei Chords
         </h1>
         <p className="text-sm text-muted-foreground text-balance">
@@ -55,12 +54,10 @@ export function LoginForm() {
         </p>
       </div>
 
-      <Button
-        variant="outline"
-        size="lg"
-        className="w-full h-11 gap-3 text-sm font-medium"
+      <button
         onClick={handleGoogleLogin}
         disabled={loading}
+        className="flex w-full items-center justify-center gap-3 rounded-full border border-border/20 bg-card px-6 py-3 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-50"
       >
         {loading ? (
           <Loader2 className="size-4 animate-spin" />
@@ -68,9 +65,9 @@ export function LoginForm() {
           <GoogleIcon className="size-4" />
         )}
         {loading ? "Verbinden..." : "Mit Google anmelden"}
-      </Button>
+      </button>
 
-      <p className="text-xs text-muted-foreground text-center text-balance leading-relaxed">
+      <p className="text-[10px] text-muted-foreground/50 text-center text-balance leading-relaxed uppercase tracking-wider">
         {"Mit der Anmeldung stimmst du unseren Nutzungsbedingungen und Datenschutzrichtlinien zu."}
       </p>
     </div>

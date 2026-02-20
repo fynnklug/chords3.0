@@ -1,0 +1,88 @@
+{
+  "slug": "hallelujah",
+  "title": "Hallelujah",
+  "artist": "Leonard Cohen",
+  "category": "Folk",
+  "sections": [
+    {
+      "type": "verse",
+      "label": "Verse 1",
+      "lines": [
+        "Now I've [C]heard there was a [Am]secret chord",
+        "That [C]David played and it [Am]pleased the Lord",
+        "But [F]you don't really [G]care for music, [C]do you? [G]",
+        "It [C]goes like this, the [F]fourth, the [G]fifth",
+        "The [Am]minor fall, the [F]major lift",
+        "The [G]baffled king com[E7]posing Halle[Am]lujah"
+      ]
+    },
+    {
+      "type": "chorus",
+      "label": "Chorus",
+      "lines": [
+        "[F]Halle[Am]lujah, [F]Halle[Am]lujah",
+        "[F]Halle[C]lu[G]jah, Hallelu[C]jah [G]"
+      ]
+    },
+    {
+      "type": "verse",
+      "label": "Verse 2",
+      "lines": [
+        "Your [C]faith was strong but you [Am]needed proof",
+        "You [C]saw her bathing [Am]on the roof",
+        "Her [F]beauty and the [G]moonlight over[C]threw you [G]",
+        "She [C]tied you to a [F]kitchen [G]chair",
+        "She [Am]broke your throne, she [F]cut your hair",
+        "And [G]from your lips she [E7]drew the Halle[Am]lujah"
+      ]
+    },
+    {
+      "type": "chorus",
+      "label": "Chorus",
+      "lines": [
+        "[F]Halle[Am]lujah, [F]Halle[Am]lujah",
+        "[F]Halle[C]lu[G]jah, Hallelu[C]jah [G]"
+      ]
+    },
+    {
+      "type": "verse",
+      "label": "Verse 3",
+      "lines": [
+        "[C]Baby, I have [Am]been here before",
+        "I [C]know this room, I've [Am]walked this floor",
+        "I [F]used to live a[G]lone before I [C]knew you [G]",
+        "I've [C]seen your flag on the [F]marble [G]arch",
+        "[Am]Love is not a victory [F]march",
+        "It's a [G]cold and it's a [E7]broken Halle[Am]lujah"
+      ]
+    },
+    {
+      "type": "chorus",
+      "label": "Chorus",
+      "lines": [
+        "[F]Halle[Am]lujah, [F]Halle[Am]lujah",
+        "[F]Halle[C]lu[G]jah, Hallelu[C]jah [G]"
+      ]
+    },
+    {
+      "type": "verse",
+      "label": "Verse 4",
+      "lines": [
+        "[C]Maybe there's a [Am]God above",
+        "And [C]all I ever [Am]learned from love",
+        "Was [F]how to shoot at [G]someone who out[C]drew you [G]",
+        "It's [C]not a cry you can [F]hear at [G]night",
+        "It's not [Am]somebody who's [F]seen the light",
+        "It's a [G]cold and it's a [E7]broken Halle[Am]lujah"
+      ]
+    },
+    {
+      "type": "chorus",
+      "label": "Chorus",
+      "lines": [
+        "[F]Halle[Am]lujah, [F]Halle[Am]lujah",
+        "[F]Halle[C]lu[G]jah, Hallelu[C]jah [G]"
+      ]
+    }
+  ]
+}

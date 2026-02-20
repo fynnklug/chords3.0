@@ -21,7 +21,8 @@ import {
   Loader2,
   Music,
 } from "lucide-react";
-import type { Song } from "@/components/app-shell/app-shell";
+import type { SongMeta } from "@/components/app-shell/app-shell";
+import type { SongData } from "@/lib/songs/types";
 import { PresentationMode } from "@/components/views/presentation-mode";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
@@ -34,7 +35,7 @@ interface Playlist {
 }
 
 interface PlaylistsViewProps {
-  onOpenSong: (song: Song) => void;
+  onOpenSong: (song: SongMeta) => void;
 }
 
 export function PlaylistsView({ onOpenSong }: PlaylistsViewProps) {
@@ -47,17 +48,17 @@ export function PlaylistsView({ onOpenSong }: PlaylistsViewProps) {
   const [creating, setCreating] = useState(false);
 
   // Detail view
-  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
-  const { data: playlistSongs, isLoading: songsLoading } = useSWR<Song[]>(
+  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(
+    null
+  );
+  const { data: playlistSongs, isLoading: songsLoading } = useSWR<SongMeta[]>(
     selectedPlaylist ? `/api/playlists/${selectedPlaylist.id}/songs` : null,
     fetcher
   );
 
   // Presentation mode for full playlist
   const [presenting, setPresenting] = useState(false);
-  const [presentSections, setPresentSections] = useState<
-    { label: string; lines: string[] }[]
-  >([]);
+  const [presentSongData, setPresentSongData] = useState<SongData | null>(null);
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
@@ -93,45 +94,48 @@ export function PlaylistsView({ onOpenSong }: PlaylistsViewProps) {
     mutate(`/api/playlists/${selectedPlaylist.id}/songs`);
   };
 
-  const handlePlayPlaylist = () => {
+  const handlePlayPlaylist = async () => {
     if (!playlistSongs?.length) return;
-    // Combine all songs into sections for presentation
-    const allSections: { label: string; lines: string[] }[] = [];
+    // Combine all songs into one merged SongData for presentation
+    const allSections: SongData["sections"] = [];
     for (const song of playlistSongs) {
-      if (!song.content) continue;
-      const raw = song.content.split("\n");
-      let current: { label: string; lines: string[] } = {
-        label: song.title,
-        lines: [],
-      };
-      for (const line of raw) {
-        const trimmed = line.trim();
-        if (/^\[.+\]$/.test(trimmed)) {
-          if (current.lines.length > 0 || current.label) {
-            allSections.push(current);
+      if (!song.slug) continue;
+      try {
+        const res = await fetch(`/api/songs/${song.slug}`);
+        const data: SongData = await res.json();
+        if (data.sections) {
+          for (const section of data.sections) {
+            allSections.push({
+              ...section,
+              label: `${data.title} - ${section.label}`,
+            });
           }
-          current = {
-            label: `${song.title} - ${trimmed.slice(1, -1)}`,
-            lines: [],
-          };
-        } else {
-          current.lines.push(line);
         }
-      }
-      if (current.lines.length > 0 || current.label) {
-        allSections.push(current);
+      } catch {
+        // skip unavailable songs
       }
     }
-    setPresentSections(allSections);
-    setPresenting(true);
+    if (allSections.length > 0) {
+      setPresentSongData({
+        slug: "playlist",
+        title: selectedPlaylist?.name ?? "Playlist",
+        artist: "",
+        category: "",
+        sections: allSections,
+      });
+      setPresenting(true);
+    }
   };
 
-  if (presenting && presentSections.length > 0) {
+  if (presenting && presentSongData) {
     return (
       <PresentationMode
-        sections={presentSections}
-        title={selectedPlaylist?.name ?? "Playlist"}
-        onClose={() => setPresenting(false)}
+        songData={presentSongData}
+        showChords={false}
+        onClose={() => {
+          setPresenting(false);
+          setPresentSongData(null);
+        }}
       />
     );
   }
@@ -140,24 +144,24 @@ export function PlaylistsView({ onOpenSong }: PlaylistsViewProps) {
   if (selectedPlaylist) {
     return (
       <div className="flex flex-col">
-        <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/80">
+        <header className="sticky top-0 z-30 border-b border-border/20 bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/40">
           <div className="flex items-center gap-2 px-4 h-14">
             <Button
               variant="ghost"
               size="icon-sm"
-              onClick={() => {
-                setSelectedPlaylist(null);
-              }}
+              className="size-8"
+              onClick={() => setSelectedPlaylist(null)}
               aria-label="Zurueck"
             >
               <ChevronLeft className="size-4" />
             </Button>
-            <h1 className="text-sm font-semibold truncate flex-1">
+            <h1 className="text-sm font-semibold truncate flex-1 text-foreground">
               {selectedPlaylist.name}
             </h1>
             <Button
               variant="ghost"
               size="icon-sm"
+              className="size-8"
               onClick={handlePlayPlaylist}
               disabled={!playlistSongs?.length}
               aria-label="Playlist abspielen"
@@ -169,10 +173,10 @@ export function PlaylistsView({ onOpenSong }: PlaylistsViewProps) {
 
         <div className="px-4 py-3">
           {songsLoading ? (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-3 p-3">
-                  <Skeleton className="size-10 rounded-md" />
+                  <Skeleton className="size-10 rounded-lg" />
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-4 w-3/4" />
                     <Skeleton className="h-3 w-1/2" />
@@ -182,30 +186,32 @@ export function PlaylistsView({ onOpenSong }: PlaylistsViewProps) {
             </div>
           ) : !playlistSongs?.length ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="flex items-center justify-center size-12 rounded-full bg-muted mb-4">
-                <Music className="size-6 text-muted-foreground" />
+              <div className="flex items-center justify-center size-12 rounded-full border border-border/20 mb-4">
+                <Music className="size-5 text-muted-foreground" />
               </div>
-              <p className="text-sm font-medium">Playlist ist leer</p>
+              <p className="text-sm font-medium text-foreground">
+                Playlist ist leer
+              </p>
               <p className="text-xs text-muted-foreground mt-1">
                 {"Fuege Lieder ueber die Suche hinzu."}
               </p>
             </div>
           ) : (
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-0.5">
               {playlistSongs.map((song) => (
                 <div
                   key={song.id}
-                  className="flex items-center gap-3 rounded-lg p-3 transition-colors hover:bg-accent"
+                  className="flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-card"
                 >
                   <button
                     className="flex items-center gap-3 flex-1 min-w-0 text-left"
                     onClick={() => onOpenSong(song)}
                   >
-                    <div className="flex items-center justify-center size-10 shrink-0 rounded-md bg-muted">
+                    <div className="flex items-center justify-center size-10 shrink-0 rounded-lg border border-border/20 bg-card">
                       <Music className="size-4 text-muted-foreground" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">
+                      <p className="text-sm font-medium truncate text-foreground">
                         {song.title}
                       </p>
                       {song.artist && (
@@ -218,10 +224,11 @@ export function PlaylistsView({ onOpenSong }: PlaylistsViewProps) {
                   <Button
                     variant="ghost"
                     size="icon-sm"
+                    className="size-8"
                     onClick={() => handleRemoveSong(song.id)}
                     aria-label="Aus Playlist entfernen"
                   >
-                    <Trash2 className="size-4" />
+                    <Trash2 className="size-3.5 text-muted-foreground" />
                   </Button>
                 </div>
               ))}
@@ -235,23 +242,24 @@ export function PlaylistsView({ onOpenSong }: PlaylistsViewProps) {
   // Playlists overview
   return (
     <div className="flex flex-col">
-      <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/80">
+      <header className="sticky top-0 z-30 border-b border-border/20 bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/40">
         <div className="flex items-center justify-between px-4 h-14">
-          <h1 className="text-lg font-semibold tracking-tight">Playlisten</h1>
-          <Button
-            variant="ghost"
-            size="icon-sm"
+          <h1 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            Playlisten
+          </h1>
+          <button
             onClick={() => setCreateOpen(true)}
+            className="flex items-center justify-center size-8 rounded-full border border-border/20 text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Neue Playlist erstellen"
           >
             <Plus className="size-4" />
-          </Button>
+          </button>
         </div>
       </header>
 
       <div className="px-4 py-3">
         {isLoading ? (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="flex items-center gap-3 p-3">
                 <Skeleton className="size-12 rounded-lg" />
@@ -264,48 +272,50 @@ export function PlaylistsView({ onOpenSong }: PlaylistsViewProps) {
           </div>
         ) : !playlists?.length ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="flex items-center justify-center size-12 rounded-full bg-muted mb-4">
+            <div className="flex items-center justify-center size-14 rounded-full border border-border/20 mb-4">
               <ListMusic className="size-6 text-muted-foreground" />
             </div>
-            <p className="text-sm font-medium">Keine Playlisten</p>
+            <p className="text-sm font-medium text-foreground">
+              Keine Playlisten
+            </p>
             <p className="text-xs text-muted-foreground mt-1">
               Erstelle deine erste Playlist.
             </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-4"
+            <button
               onClick={() => setCreateOpen(true)}
+              className="mt-4 rounded-full border border-border/20 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-foreground hover:bg-card transition-colors"
             >
-              <Plus className="size-4" />
               Playlist erstellen
-            </Button>
+            </button>
           </div>
         ) : (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-0.5">
             {playlists.map((pl) => (
               <div
                 key={pl.id}
-                className="flex items-center gap-3 rounded-lg p-3 transition-colors hover:bg-accent"
+                className="flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-card"
               >
                 <button
                   className="flex items-center gap-3 flex-1 min-w-0 text-left"
                   onClick={() => setSelectedPlaylist(pl)}
                 >
-                  <div className="flex items-center justify-center size-12 shrink-0 rounded-lg bg-muted">
+                  <div className="flex items-center justify-center size-12 shrink-0 rounded-lg border border-border/20 bg-card">
                     <ListMusic className="size-5 text-muted-foreground" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{pl.name}</p>
+                    <p className="text-sm font-medium truncate text-foreground">
+                      {pl.name}
+                    </p>
                   </div>
                 </button>
                 <Button
                   variant="ghost"
                   size="icon-sm"
+                  className="size-8"
                   onClick={() => handleDelete(pl.id)}
                   aria-label="Playlist loeschen"
                 >
-                  <Trash2 className="size-4" />
+                  <Trash2 className="size-3.5 text-muted-foreground" />
                 </Button>
               </div>
             ))}
@@ -315,20 +325,24 @@ export function PlaylistsView({ onOpenSong }: PlaylistsViewProps) {
 
       {/* Create playlist dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent>
+        <DialogContent className="border-border/20">
           <DialogHeader>
-            <DialogTitle>Neue Playlist</DialogTitle>
+            <DialogTitle className="text-xs font-semibold uppercase tracking-[0.15em]">
+              Neue Playlist
+            </DialogTitle>
           </DialogHeader>
           <Input
             placeholder="Name der Playlist"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+            className="border-border/20 bg-card"
           />
           <DialogFooter>
             <Button
               onClick={handleCreate}
               disabled={!newName.trim() || creating}
+              className="rounded-full"
             >
               {creating ? (
                 <Loader2 className="size-4 animate-spin" />

@@ -14,9 +14,10 @@ export async function GET(
     const result = await db
       .select({
         id: lieder.id,
+        slug: lieder.slug,
         title: lieder.title,
         artist: lieder.artist,
-        content: lieder.content,
+        category: lieder.category,
         createdAt: lieder.createdAt,
       })
       .from(playlistLieder)

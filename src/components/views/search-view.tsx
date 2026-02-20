@@ -4,7 +4,6 @@ import { useState, useMemo } from "react";
 import useSWR from "swr";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
@@ -12,26 +11,25 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
-  DrawerClose,
 } from "@/components/ui/drawer";
-import { Search, Mic, ListPlus, Music } from "lucide-react";
-import type { Song } from "@/components/app-shell/app-shell";
+import { Search, Mic, Plus, Music } from "lucide-react";
+import type { SongMeta } from "@/components/app-shell/app-shell";
 import { AddToPlaylistContent } from "@/components/shared/add-to-playlist";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-const categories = ["Alle", "Worship", "Lobpreis", "Hymne", "Modern", "Klassisch"];
+const categories = ["Alle", "Rock", "Classic", "Folk", "Worship", "Modern"];
 
 interface SearchViewProps {
-  onSingNow: (song: Song) => void;
+  onSingNow: (song: SongMeta) => void;
 }
 
 export function SearchView({ onSingNow }: SearchViewProps) {
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("Alle");
-  const [drawerSong, setDrawerSong] = useState<Song | null>(null);
+  const [drawerSong, setDrawerSong] = useState<SongMeta | null>(null);
 
-  const { data: songs, isLoading } = useSWR<Song[]>("/api/songs", fetcher);
+  const { data: songs, isLoading } = useSWR<SongMeta[]>("/api/songs", fetcher);
 
   const filtered = useMemo(() => {
     if (!songs) return [];
@@ -44,24 +42,31 @@ export function SearchView({ onSingNow }: SearchViewProps) {
           s.artist?.toLowerCase().includes(q)
       );
     }
+    if (activeCategory !== "Alle") {
+      result = result.filter(
+        (s) => s.category?.toLowerCase() === activeCategory.toLowerCase()
+      );
+    }
     return result;
   }, [songs, query, activeCategory]);
 
   return (
     <div className="flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur-sm supports-[backdrop-filter]:bg-background/80">
-        <div className="px-4 pt-4 pb-3">
-          <h1 className="text-lg font-semibold tracking-tight">Suche</h1>
+      <header className="sticky top-0 z-30 border-b border-border/20 bg-background/60 backdrop-blur-xl supports-[backdrop-filter]:bg-background/40">
+        <div className="px-4 pt-6 pb-2">
+          <h1 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            Suche
+          </h1>
         </div>
         <div className="px-4 pb-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Lied oder Interpret suchen..."
+              placeholder="Lied oder Interpret..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="pl-9 h-10"
+              className="pl-9 h-10 border-border/20 bg-card"
             />
           </div>
         </div>
@@ -71,14 +76,13 @@ export function SearchView({ onSingNow }: SearchViewProps) {
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className="shrink-0"
+                className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wider transition-colors ${
+                  activeCategory === cat
+                    ? "bg-foreground text-background"
+                    : "border border-border/20 text-muted-foreground hover:text-foreground"
+                }`}
               >
-                <Badge
-                  variant={activeCategory === cat ? "default" : "outline"}
-                  className="cursor-pointer px-3 py-1 text-xs"
-                >
-                  {cat}
-                </Badge>
+                {cat}
               </button>
             ))}
           </div>
@@ -89,10 +93,10 @@ export function SearchView({ onSingNow }: SearchViewProps) {
       {/* Song list */}
       <div className="flex-1 px-4 py-3">
         {isLoading ? (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="flex items-center gap-3 p-3">
-                <Skeleton className="size-10 rounded-md" />
+                <Skeleton className="size-10 rounded-lg" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-4 w-3/4" />
                   <Skeleton className="h-3 w-1/2" />
@@ -102,10 +106,12 @@ export function SearchView({ onSingNow }: SearchViewProps) {
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="flex items-center justify-center size-12 rounded-full bg-muted mb-4">
-              <Music className="size-6 text-muted-foreground" />
+            <div className="flex items-center justify-center size-12 rounded-full border border-border/20 mb-4">
+              <Music className="size-5 text-muted-foreground" />
             </div>
-            <p className="text-sm font-medium">Keine Lieder gefunden</p>
+            <p className="text-sm font-medium text-foreground">
+              Keine Lieder gefunden
+            </p>
             <p className="text-xs text-muted-foreground mt-1">
               {query
                 ? "Versuche einen anderen Suchbegriff."
@@ -113,39 +119,63 @@ export function SearchView({ onSingNow }: SearchViewProps) {
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-0.5">
             {filtered.map((song) => (
               <div
                 key={song.id}
-                className="flex items-center gap-3 rounded-lg p-3 transition-colors hover:bg-accent"
+                className="group flex items-center gap-3 rounded-xl p-3 transition-colors hover:bg-card"
               >
-                <div className="flex items-center justify-center size-10 shrink-0 rounded-md bg-muted">
-                  <Music className="size-4 text-muted-foreground" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{song.title}</p>
-                  {song.artist && (
+                <button
+                  className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                  onClick={() => onSingNow(song)}
+                >
+                  <div className="flex items-center justify-center size-10 shrink-0 rounded-lg border border-border/20 bg-card">
+                    <Music className="size-4 text-muted-foreground" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate text-foreground">
+                      {song.title}
+                    </p>
                     <p className="text-xs text-muted-foreground truncate">
                       {song.artist}
+                      {song.category && (
+                        <span className="ml-2 text-muted-foreground/50">
+                          {song.category}
+                        </span>
+                      )}
                     </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-1">
+                  </div>
+                </button>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button
                     variant="ghost"
                     size="icon-sm"
+                    className="size-8"
                     onClick={() => setDrawerSong(song)}
                     aria-label="Zur Playlist hinzufuegen"
                   >
-                    <ListPlus className="size-4" />
+                    <Plus className="size-4" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon-sm"
+                    className="size-8"
                     onClick={() => onSingNow(song)}
                     aria-label="Jetzt singen"
                   >
                     <Mic className="size-4" />
+                  </Button>
+                </div>
+                {/* Mobile-visible buttons */}
+                <div className="flex items-center gap-1 md:hidden">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="size-8"
+                    onClick={() => setDrawerSong(song)}
+                    aria-label="Zur Playlist hinzufuegen"
+                  >
+                    <Plus className="size-3.5 text-muted-foreground" />
                   </Button>
                 </div>
               </div>
@@ -155,10 +185,15 @@ export function SearchView({ onSingNow }: SearchViewProps) {
       </div>
 
       {/* Add to playlist drawer */}
-      <Drawer open={!!drawerSong} onOpenChange={(o) => !o && setDrawerSong(null)}>
+      <Drawer
+        open={!!drawerSong}
+        onOpenChange={(o) => !o && setDrawerSong(null)}
+      >
         <DrawerContent>
           <DrawerHeader>
-            <DrawerTitle>Zur Playlist hinzufuegen</DrawerTitle>
+            <DrawerTitle className="text-xs font-semibold uppercase tracking-[0.15em]">
+              Zur Playlist hinzufuegen
+            </DrawerTitle>
           </DrawerHeader>
           {drawerSong && (
             <AddToPlaylistContent
