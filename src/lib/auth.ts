@@ -9,7 +9,6 @@ const trustedOrigins = (process.env.BETTER_AUTH_TRUSTED_ORIGINS || "")
     .filter((origin): origin is string => Boolean(origin));
 
 export const auth = betterAuth({
-    baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_BETTER_AUTH_URL,
     trustedOrigins,
     database: drizzleAdapter(db, {
         provider: "pg", // oder "sqlite", "mysql" je nach DB
